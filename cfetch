@@ -8,6 +8,7 @@
 export LANG='POSIX'
 
 # Parse kernel, version, and machine architecture.
+N=0
 for STRING in $(uname -mrs); do
   N=$((N+1))
   case "$N" in
@@ -43,7 +44,7 @@ getUser() {
 getDistro() {
 
   # Parse OSes identification-data.
-  if [ -f '/bedrock/etc/bedrock-release' -a -z "$BEDROCK_RESTRICT" ]; then
+  if [ -f '/bedrock/etc/bedrock-release' ] && [ -z "$BEDROCK_RESTRICT" ]; then
     PRETTY_NAME='Bedrock Linux'
   else
     # shellcheck source=/etc/os-release source=/usr/lib/os-release
@@ -68,7 +69,7 @@ getWM() {
 
   # Get current DE sessions through available environment variables,
   # `xprop` is as fallback for EWMH-compliant WMs.
-  if [ -n "$XDG_CURRENT_DESKTOP" -o -n "$DESKTOP_SESSION" ]; then
+  if [ -n "$XDG_CURRENT_DESKTOP" ] || [ -n "$DESKTOP_SESSION" ]; then
     DE="${XDG_CURRENT_DESKTOP#*:-"${DESKTOP_SESSION##*/}"}"
   elif [ -n "$GNOME_DESKTOP_SESSION_ID" ]; then
     DE='GNOME'
@@ -76,10 +77,10 @@ getWM() {
     DE='MATE'
   elif [ -n "$TDE_FULL_SESSION" ]; then
     DE='Trinity'
-  elif [ -x "$(command -v xprop)" ]; then
+  elif command -v xprop >/dev/null 2>&1; then
     XPROP_ID="$(xprop -root -notype _NET_SUPPORTING_WM_CHECK)"
-    XPROP_WM="$(xprop -id "${XPROP_ID##*#\ }" -notype _NET_WM_NAME)"
-    WM="${XPROP_WM##*_NET_WM_NAME\ =\ \"}"
+    XPROP_WM="$(xprop -id "${XPROP_ID##*# }" -notype _NET_WM_NAME)"
+    WM="${XPROP_WM##*_NET_WM_NAME = \"}"
     WM="${WM%%\"*}"
   fi
 
@@ -93,7 +94,7 @@ getWM() {
       ;;
     esac
 
-    WM="$(ps ${PS_FLAGS} | grep -m1 -Fo \
+    WM="$(ps ${PS_FLAGS} | grep -Fo \
                                 -e arcan \
                                 -e asc \
                                 -e clayland \
@@ -122,7 +123,8 @@ getWM() {
                                 -e wayhouse \
                                 -e westeros \
                                 -e westford \
-                                -e weston
+                                -e weston \
+                                | head -n 1
     )"
 
   fi
