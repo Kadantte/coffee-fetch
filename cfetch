@@ -138,6 +138,9 @@ getWM() {
 
 getPackages() {
 
+  # Save the icon argument before we overwrite the positional parameters.
+  ICON="${*}"
+
   PKG_MANAGER=""
   PKGS_INFO=""
 
@@ -220,7 +223,7 @@ getPackages() {
   done
 
   # Show packages information.
-  printf "${c5}${*}  ${rs}%s" "${PKGS_INFO%, }"
+  printf "${c5}%s  ${rs}%s" "${ICON}" "${PKGS_INFO%, }"
 
 }
 
