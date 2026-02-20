@@ -134,6 +134,9 @@ getWM() {
 
 getPackages() {
 
+  PKG_MANAGER=""
+  PKGS_INFO=""
+
   # Verify system-installed package manager.
   for PM in apt \
             dnf \
@@ -145,42 +148,59 @@ getPackages() {
             xbps-query \
             kiss
   do
-    [ -x "$(command -v "$PM")" ] && PKG_MANAGER="${PKG_MANAGER} ${PM}"
+    command -v "$PM" >/dev/null 2>&1 && PKG_MANAGER="${PKG_MANAGER} ${PM}"
   done
 
   # Count installed packages for each package manager.
-  for MANAGER in ${PKG_MANAGER#\ }; do
+  for MANAGER in ${PKG_MANAGER# }; do
+
+    PKG_XCPT=0
 
     # Get/query installed packages.
     # Note that if the system contains directories of installed packages,
     # it's highly recommended to use glob as `emerge` below. Assign PKG_XCPT
     # to reduce TOTAL_PKGS if any unexpected files are included by globs.
     case "$MANAGER" in
-      apt       ) GET_PKGS='/var/lib/dpkg/info/*.list'
-      ;;
-      dnf       ) GET_PKGS="$(dnf list installed)"
-      ;;
-      emerge    ) GET_PKGS='/var/db/pkg/*/*'
-      ;;
-      flatpak   ) GET_PKGS="$(flatpak --columns=app list)"
-      ;;
-      nix-env   ) GET_PKGS="$(nix-store -q --requisites /run/current-system/sw)"
-                  # Make the NixOS package manager as "nix" to make it even better (?)
-                  MANAGER='nix'
-      ;;
-      pacman    ) GET_PKGS='/var/lib/pacman/local/[0-9a-z]*'
-                  # This already exclude 'ALPM_DB_VERSION' files get included by globs.
-      ;;
-      rpm       ) GET_PKGS="$(rpm -qa --last)"
-      ;;
-      xbps-query) GET_PKGS='/var/db/xbps/.*'
-      ;;
-      kiss      ) GET_PKGS='/var/db/kiss/installed/*'
-      ;;
+      apt) 
+        set -- /var/lib/dpkg/info/*.list
+        TOTAL_PKGS="$#"
+        ;;
+      dnf) 
+        TOTAL_PKGS="$(dnf list installed 2>/dev/null | wc -l)"
+        PKG_XCPT=1 # Subtract 1 to account for the 'Installed Packages' header line
+        ;;
+      emerge) 
+        set -- /var/db/pkg/*/*
+        TOTAL_PKGS="$#"
+        ;;
+      flatpak) 
+        TOTAL_PKGS="$(flatpak --columns=app list 2>/dev/null | wc -l)"
+        ;;
+      nix-env) 
+        TOTAL_PKGS="$(nix-store -q --requisites /run/current-system/sw 2>/dev/null | wc -l)"
+        MANAGER='nix'
+        ;;
+      pacman) 
+        set -- /var/lib/pacman/local/[0-9a-z]*
+        TOTAL_PKGS="$#"
+        ;;
+      rpm) 
+        TOTAL_PKGS="$(rpm -qa 2>/dev/null | wc -l)"
+        ;;
+      xbps-query) 
+        set -- /var/db/xbps/.*
+        TOTAL_PKGS="$#"
+        PKG_XCPT=2 # Subtract 2 to ignore the '.' and '..' directories
+        ;;
+      kiss) 
+        set -- /var/db/kiss/installed/*
+        TOTAL_PKGS="$#"
+        ;;
     esac
 
     # Count all queried packages.
-    TOTAL_PKGS="$(($(set -- ${GET_PKGS}; echo "${#}") - PKG_XCPT))"
+    TOTAL_PKGS=$((TOTAL_PKGS - PKG_XCPT))
+    [ "$TOTAL_PKGS" -lt 0 ] && TOTAL_PKGS=0
 
     # If only zero or one package is installed,
     # make the package manager looks unrecognized.
@@ -196,7 +216,7 @@ getPackages() {
   done
 
   # Show packages information.
-  printf "${c5}${*}  ${rs}%s" "${PKGS_INFO%,\ }"
+  printf "${c5}${*}  ${rs}%s" "${PKGS_INFO%, }"
 
 }
 
