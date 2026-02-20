@@ -23,7 +23,7 @@ done
 
 # Determine current OS.
 case "$KERN" in
-  Linux|GNU*|*BSD|DragonFly|Bitrig)
+  Linux|GNU*|*BSD|DragonFly|Bitrig|Darwin)
   ;;
   *) echo 'Unknown OS detected!' \
           "'${KERN}' currently not supported yet." >&2
