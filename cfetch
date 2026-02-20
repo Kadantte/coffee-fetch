@@ -203,27 +203,44 @@ getPackages() {
 getUptime() {
 
   # Parse the system-uptime since boot.
-  IFS=. read -r s _ </proc/uptime
+  if [ -r '/proc/uptime' ]; then
+
+    IFS=. read -r SEC _ </proc/uptime
+
+  # MacOS / BSD fallback via sysctl.
+  elif command -v sysctl >/dev/null 2>&1; then
+
+    BOOT_RAW=$(sysctl -n kern.boottime 2>/dev/null | cut -d' ' -f4)
+    BOOT_SEC="${BOOT_RAW%,}"
+    NOW_SEC=$(date +%s)
+    SEC=$((NOW_SEC - BOOT_SEC))
+
+  else
+    SEC=0
+  fi
 
   # Convert uptime into readable value.
-  d="$((s / 60 / 60 / 24))"
-  h="$((s / 60 / 60 % 24))"
-  m="$((s / 60 % 60))"
+  DAY="$((SEC / 60 / 60 / 24))"
+  HOUR="$((SEC / 60 / 60 % 24))"
+  MIN="$((SEC / 60 % 60))"
 
   # Plurals.
-  [ "$d" -gt 1 ] && dp=s
-  [ "$h" -gt 1 ] && hp=s
-  [ "$m" -gt 1 ] && mp=s
-  [ "$s" -gt 1 ] && sp=s
+  [ "$DAY" -gt 1 ] && DP=s
+  [ "$HOUR" -gt 1 ] && HP=s
+  [ "$MIN" -gt 1 ] && MP=s
+  [ "$SEC" -gt 1 ] && SP=s
 
   # Hide empty fields and make the output of uptime smaller.
-  [ "$d" -eq 0 ] || UPTIME="${d} day${dp}, "
-  [ "$h" -eq 0 ] || UPTIME="${UPTIME}${h} hour${hp}, "
-  [ "$m" -eq 0 ] || UPTIME="${UPTIME}${m} min${mp}"
-  [  -n  "$m"  ] || UPTIME="${UPTIME}${s} sec${sp}"
+  UPTIME=""
+  [ "$DAY" -eq 0 ] || UPTIME="${DAY} day${DP}, "
+  [ "$HOUR" -eq 0 ] || UPTIME="${UPTIME}${HOUR} hour${HP}, "
+  [ "$MIN" -eq 0 ] || UPTIME="${UPTIME}${MIN} min${MP}"
+
+  # If under a minute, UPTIME will be empty. Show seconds.
+  [ -z "$UPTIME" ] && UPTIME="${SEC} sec${SP}"
 
   # Show system-uptime information.
-  printf "${c5}${*}  ${rs}%s" "${UPTIME%,\ }"
+  printf "${c5}${*}  ${rs}%s" "${UPTIME%, }"
 
 }
 
