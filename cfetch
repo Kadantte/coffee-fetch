@@ -5,7 +5,8 @@
 # shellcheck disable=SC3028,SC2166,SC2009,SC2034,SC2086
 
 # Disable UTF-8 to speeds up script execution.
-export LANG='POSIX'
+LC_ALL=POSIX
+LANG=POSIX
 
 # Parse kernel, version, and machine architecture.
 N=0
@@ -70,7 +71,8 @@ getWM() {
   # Get current DE sessions through available environment variables,
   # `xprop` is as fallback for EWMH-compliant WMs.
   if [ -n "$XDG_CURRENT_DESKTOP" ] || [ -n "$DESKTOP_SESSION" ]; then
-    DE="${XDG_CURRENT_DESKTOP#*:-"${DESKTOP_SESSION##*/}"}"
+    DE="${XDG_CURRENT_DESKTOP#*:}"
+    DE="${DE:-${DESKTOP_SESSION##*/}}"
   elif [ -n "$GNOME_DESKTOP_SESSION_ID" ]; then
     DE='GNOME'
   elif [ -n "$MATE_DESKTOP_SESSION_ID" ]; then
@@ -95,35 +97,35 @@ getWM() {
     esac
 
     WM="$(ps ${PS_FLAGS} | grep -Fo \
-                                -e arcan \
-                                -e asc \
-                                -e clayland \
-                                -e dwc \
-                                -e fireplace \
-                                -e gnome-shell \
-                                -e greenfield \
-                                -e grefsen \
-                                -e hikari \
-                                -e kwin \
-                                -e lipstick \
-                                -e maynard \
-                                -e mazecompositor \
-                                -e motorcar \
-                                -e orbital \
-                                -e orbment \
-                                -e perceptia \
-                                -e river \
-                                -e rustland \
-                                -e sway \
-                                -e ulubis \
-                                -e velox \
-                                -e wavy \
-                                -e way-cooler \
-                                -e wayfire \
-                                -e wayhouse \
-                                -e westeros \
-                                -e westford \
-                                -e weston \
+                                -e ^arcan$ \
+                                -e ^asc$ \
+                                -e ^clayland$ \
+                                -e ^dwc$ \
+                                -e ^fireplace$ \
+                                -e ^gnome-shell$ \
+                                -e ^greenfield$ \
+                                -e ^grefsen$ \
+                                -e ^hikari$ \
+                                -e ^kwin$ \
+                                -e ^lipstick$ \
+                                -e ^maynard$ \
+                                -e ^mazecompositor$ \
+                                -e ^motorcar$ \
+                                -e ^orbital$ \
+                                -e ^orbment$ \
+                                -e ^perceptia$ \
+                                -e ^river$ \
+                                -e ^rustland$ \
+                                -e ^sway$ \
+                                -e ^ulubis$ \
+                                -e ^velox$ \
+                                -e ^wavy$ \
+                                -e ^way-cooler$ \
+                                -e ^wayfire$ \
+                                -e ^wayhouse$ \
+                                -e ^westeros$ \
+                                -e ^westford$ \
+                                -e ^weston$ \
                                 | head -n 1
     )"
 
