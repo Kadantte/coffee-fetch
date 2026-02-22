@@ -14,7 +14,7 @@ Execution time is really important for me, thats why i made this simple fetching
 ```sh
 # Curl `cfetch` into your PATH e.g ~/.local/bin and give execute permissions.
 install -m755 /dev/stdin ~/.local/bin/cfetch << CFETCH
-$(curl -sL https://raw.githubusercontent.com/Dyzean/coffee-fetch/main/cfetch)
+$(curl -sL https://raw.githubusercontent.com/ashtrath/coffee-fetch/main/cfetch)
 CFETCH
 
 # Prepare your coffee and relax.
